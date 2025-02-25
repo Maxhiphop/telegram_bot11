@@ -1,18 +1,18 @@
+import random
 import logging
 import asyncio
-from aiogram import Bot, types, Application  # Исправленный импорт
+from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
-from aiogram import F
 
 API_TOKEN = '8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY'  # Замените на ваш токен
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 
-# Инициализация бота и приложения
+# Инициализация бота и диспетчера
 bot = Bot(token=API_TOKEN)
-app = Application.builder().token(API_TOKEN).build()  # Создаем приложение
+dp = Dispatcher(bot)
 
 # Словарь для хранения активных чатов
 active_chats = {}
@@ -28,15 +28,15 @@ keyboard = ReplyKeyboardMarkup(
 )
 
 # Команда /start
-@app.message(F.command("start"))
+@dp.message_handler(commands=["start"])
 async def start(message: types.Message):
     await message.answer(
         "Добро пожаловать в элитное общество теней! Нажмите '🔍 Найти тень', чтобы начать.",
         reply_markup=keyboard
     )
 
-# Поиск собеседника
-@app.message(F.text == '🔍 Найти тень')
+# Поиск собеседника (случайный выбор)
+@dp.message_handler(lambda message: message.text == '🔍 Найти тень')
 async def find_chat(message: types.Message):
     user_id = message.from_user.id
 
@@ -53,11 +53,12 @@ async def find_chat(message: types.Message):
             await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
             return
 
+    # Если партнера не нашли, сообщаем об этом
     active_chats[user_id] = None  # Устанавливаем значение None, пока не найдем партнера
     await message.answer("🔍 Ищем тень... Пожалуйста, подождите.")
 
 # Обработка сообщений
-@app.message(F.text)
+@dp.message_handler(lambda message: message.from_user.id in active_chats)
 async def handle_message(message: types.Message):
     user_id = message.from_user.id
 
@@ -71,12 +72,12 @@ async def handle_message(message: types.Message):
                 logging.error(f"Ошибка при отправке сообщения: {e}")
         else:
             await message.answer("❌ Ошибка: ваш чат был потерян. Попробуйте снова найти тень.")
-            active_chats.pop(user_id, None)
+            active_chats.pop(user_id, None)  # Удаляем потерянное соединение
     else:
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'")
 
 # Оборвать связь
-@app.message(F.text == "🛑 Оборвать связь")
+@dp.message_handler(lambda message: message.text == "🛑 Оборвать связь")
 async def stop_chat(message: types.Message):
     user_id = message.from_user.id
     if user_id in active_chats:
@@ -89,7 +90,7 @@ async def stop_chat(message: types.Message):
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
 # Кодекс теней
-@app.message(F.text == "📜 Кодекс теней")
+@dp.message_handler(lambda message: message.text == "📜 Кодекс теней")
 async def show_rules(message: types.Message):
     rules_text = (
         "📜 *Кодекс теней:*\n"
@@ -104,10 +105,11 @@ async def show_rules(message: types.Message):
 # Запуск бота
 async def main():
     logging.basicConfig(level=logging.INFO)
-    await app.start_polling()
+    await dp.start_polling()
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 with open("README.md", "a", encoding="utf-8") as file:
