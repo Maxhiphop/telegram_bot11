@@ -4,6 +4,7 @@ import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
+from aiogram.client import Application
 
 API_TOKEN = '8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY'  # Замените на ваш токен
 
@@ -12,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Инициализация бота и диспетчера
 bot = Bot(token=API_TOKEN)
-dp = Dispatcher(bot)
+app = Application.builder().token(API_TOKEN).build()
 
 # Словарь для хранения активных чатов
 active_chats = {}
@@ -28,7 +29,7 @@ keyboard = ReplyKeyboardMarkup(
 )
 
 # Команда /start
-@dp.message(Command("start"))
+@app.message(Command("start"))
 async def start(message: types.Message):
     await message.answer(
         "Добро пожаловать в элитное общество теней! Нажмите '🔍 Найти тень', чтобы начать.",
@@ -36,7 +37,7 @@ async def start(message: types.Message):
     )
 
 # Поиск собеседника (случайный выбор)
-@dp.message(Command("find"))
+@app.message(Command("find"))
 async def find_chat(message: types.Message):
     user_id = message.from_user.id
 
@@ -58,7 +59,7 @@ async def find_chat(message: types.Message):
     await message.answer("🔍 Ищем тень... Пожалуйста, подождите.")
 
 # Обработка сообщений
-@dp.message()
+@app.message()
 async def handle_message(message: types.Message):
     user_id = message.from_user.id
 
@@ -77,7 +78,7 @@ async def handle_message(message: types.Message):
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'")
 
 # Оборвать связь
-@dp.message(lambda message: message.text == "🛑 Оборвать связь")
+@app.message(lambda message: message.text == "🛑 Оборвать связь")
 async def stop_chat(message: types.Message):
     user_id = message.from_user.id
     if user_id in active_chats:
@@ -90,7 +91,7 @@ async def stop_chat(message: types.Message):
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
 # Кодекс теней
-@dp.message(lambda message: message.text == "📜 Кодекс теней")
+@app.message(lambda message: message.text == "📜 Кодекс теней")
 async def show_rules(message: types.Message):
     rules_text = (
         "📜 *Кодекс теней:*\n"
@@ -105,10 +106,11 @@ async def show_rules(message: types.Message):
 # Запуск бота
 async def main():
     logging.basicConfig(level=logging.INFO)
-    await dp.start_polling()
+    await app.start_polling()
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 
