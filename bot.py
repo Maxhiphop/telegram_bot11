@@ -4,6 +4,7 @@ import random
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
+from aiogram.utils.exceptions import NetworkError, ChatNotFound
 
 # Токен бота
 TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"
@@ -60,7 +61,7 @@ async def find_chat(message: types.Message):
             await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
             await message.answer("✅ Тень найдена! Начинайте общение.")
             logging.info(f"Чат создан между {user_id} и {partner_id}")
-        except Exception as e:
+        except (NetworkError, ChatNotFound) as e:
             logging.error(f"Ошибка при отправке сообщения партнеру {partner_id}: {e}")
             await message.answer("❌ Произошла ошибка при установке связи. Попробуйте снова.")
     else:
@@ -124,7 +125,7 @@ async def chat_handler(message: types.Message):
                     logging.info(f"Сообщение от {user_id} отправлено партнёру {partner_id}")
                 else:
                     logging.warning(f"Пользователь {user_id} пытается отправить сообщение самому себе.")
-            except Exception as e:
+            except (NetworkError, ChatNotFound) as e:
                 logging.error(f"Ошибка при отправке сообщения партнёру {partner_id}: {e}")
                 await message.answer("❌ Не удалось отправить сообщение. Попробуйте позже.")
         else:
