@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import random
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
@@ -33,7 +34,7 @@ async def start(message: types.Message):
         reply_markup=keyboard
     )
 
-# Поиск собеседника
+# Поиск собеседника (случайный выбор)
 @dp.message(lambda message: message.text == "🔍 Найти тень")
 async def find_chat(message: types.Message):
     user_id = message.from_user.id
@@ -42,8 +43,11 @@ async def find_chat(message: types.Message):
         await message.answer("❌ Ты уже говоришь с тенью!")
         return
 
-    if waiting_users and waiting_users[0] != user_id:
-        partner_id = waiting_users.pop(0)
+    if waiting_users:
+        # Выбираем случайного собеседника
+        partner_id = random.choice(waiting_users)
+        waiting_users.remove(partner_id)
+
         active_chats[user_id] = partner_id
         active_chats[partner_id] = user_id
 
@@ -59,7 +63,7 @@ async def stop_chat_internal(user_id: int):
     """Закрывает чат между двумя пользователями"""
     if user_id in active_chats:
         partner_id = active_chats.pop(user_id, None)
-        if partner_id:
+        if partner_id and partner_id in active_chats:
             active_chats.pop(partner_id, None)
             await bot.send_message(partner_id, "❌ Тень ушла.")
         await bot.send_message(user_id, "❌ Ты прервал связь с тенью.")
@@ -99,9 +103,12 @@ async def chat_handler(message: types.Message):
     if user_id in active_chats:
         partner_id = active_chats.get(user_id)
         if partner_id:
-            await bot.send_message(partner_id, message.text)
+            try:
+                await bot.send_message(partner_id, message.text)
+            except Exception as e:
+                logging.error(f"Ошибка при отправке сообщения: {e}")
     else:
-        return  # Теперь бот **не отправляет лишний текст "❌ Вы не в чате"**
+        return  # Убрано лишнее сообщение "❌ Вы не в чате"
 
 # Запуск бота
 async def main():
@@ -110,8 +117,6 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
 
 
 with open("README.md", "a", encoding="utf-8") as file:
