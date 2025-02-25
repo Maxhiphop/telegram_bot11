@@ -5,18 +5,18 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
 
-# Token
+# Токен
 TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"
 
-# Bot and Dispatcher
+# Инициализация бота и диспетчера
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot=bot)
 
-# User storage
+# Очередь ожидания и активные чаты
 waiting_users = []
 active_chats = {}
 
-# Keyboard
+# Клавиатура
 keyboard = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text="🔍 Найти тень")],
@@ -26,25 +26,28 @@ keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
-# Responses
+# Возможные ответы при соединении
 find_shadow_responses = [
     "✅ Тень найдена! Начинайте общение.",
     "✅ Ты встретил свою тень. Приятного общения.",
     "✅ Тень рядом. Начинай разговор."
 ]
 
-# Command /start
+# Обработка команды /start
 @dp.message(Command("start"))
 async def start(message: types.Message):
-    await message.answer("Добро пожаловать в элитное общество теней! Нажмите '🔍 Найти тень', чтобы начать.", reply_markup=keyboard)
+    await message.answer(
+        "Добро пожаловать в элитное общество теней! Нажмите '🔍 Найти тень', чтобы начать.",
+        reply_markup=keyboard
+    )
 
-# Find a shadow
+# Поиск собеседника
 @dp.message(lambda message: message.text == "🔍 Найти тень")
 async def find_chat(message: types.Message):
     user_id = message.from_user.id
 
     if user_id in active_chats:
-        await message.answer("❌ Ты говоришь с тенью!")
+        await message.answer("❌ Ты уже говоришь с тенью!")
         return
 
     if waiting_users and waiting_users[0] != user_id:
@@ -52,42 +55,38 @@ async def find_chat(message: types.Message):
         active_chats[user_id] = partner_id
         active_chats[partner_id] = user_id
 
-        try:
-            await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
-            response = random.choice(find_shadow_responses)
-            await message.answer(response)
-        except Exception as e:
-            logging.error(f"Ошибка при отправке сообщения: {e}")
-            await message.answer("❌ Произошла ошибка при поиске тени.")
+        await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
+        await message.answer(random.choice(find_shadow_responses))
     else:
         if user_id not in waiting_users:
             waiting_users.append(user_id)
         await message.answer("⏳ В поисках тени...")
 
-# Stop chat /stop command
+# Отключение от чата
+async def stop_chat_internal(user_id: int):
+    """Закрывает чат между двумя пользователями"""
+    if user_id in active_chats:
+        partner_id = active_chats.pop(user_id, None)
+        if partner_id:
+            active_chats.pop(partner_id, None)
+            await bot.send_message(partner_id, "❌ Тень ушла.")
+
+# Обработка команды /stop
 @dp.message(Command("stop"))
 async def stop_chat(message: types.Message):
     user_id = message.from_user.id
-
     if user_id in active_chats:
-        partner_id = active_chats.pop(user_id)
-        active_chats.pop(partner_id, None)
-
-        try:
-            await bot.send_message(partner_id, "❌ Тень ушла.")
-            await message.answer("❌ Тень прекратила общение.")
-        except Exception as e:
-            logging.error(f"Ошибка при завершении общения: {e}")
-            await message.answer("❌ Произошла ошибка при завершении общения.")
+        await stop_chat_internal(user_id)
+        await message.answer("❌ Ты прервал связь с тенью.")
     else:
-        await message.answer("❌ Вы не в чате. Нажмите '🔍 Найти тень'.")
+        await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
-# Stop chat via button
+# Обработка кнопки "Оборвать связь"
 @dp.message(lambda message: message.text == "🛑 Оборвать связь")
 async def stop_chat_button(message: types.Message):
     await stop_chat(message)
 
-# Show rules
+# Кодекс теней
 @dp.message(lambda message: message.text == "📜 Кодекс теней")
 async def show_rules(message: types.Message):
     rules_text = (
@@ -100,7 +99,7 @@ async def show_rules(message: types.Message):
     )
     await message.answer(rules_text, parse_mode="Markdown")
 
-# Chat message forwarding
+# Пересылка сообщений между пользователями
 @dp.message()
 async def chat_handler(message: types.Message):
     user_id = message.from_user.id
@@ -109,25 +108,21 @@ async def chat_handler(message: types.Message):
         partner_id = active_chats[user_id]
 
         if message.text in ["🛑 Оборвать связь", "/stop"]:
-            await bot.send_message(partner_id, message.text)
-            active_chats.pop(user_id, None)
-            active_chats.pop(partner_id, None)
+            await stop_chat_internal(user_id)
+            await message.answer("❌ Ты прервал связь с тенью.")
         else:
-            try:
-                await bot.send_message(partner_id, message.text)
-            except Exception as e:
-                logging.error(f"Ошибка при пересылке сообщения: {e}")
-                await message.answer("❌ Произошла ошибка при отправке сообщения.")
+            await bot.send_message(partner_id, message.text)
     else:
-        await message.answer("❌ Вы не в чате. Нажмите '🔍 Найти тень'.")
+        await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
-# Main function to run the bot
+# Запуск бота
 async def main():
     logging.basicConfig(level=logging.INFO)
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 
