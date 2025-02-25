@@ -106,8 +106,10 @@ with open("README.md", "a", encoding="utf-8") as file:
 
 import subprocess
 
-# Execute the git commit command with a message
-subprocess.run(["git", "commit", "-m", "первый коммит"])
+# Run the git commit command with a commit message
+commit_message = ""  # You can leave this empty or put your commit message here
+subprocess.run(["git", "commit", "-m", commit_message])
+
 
 git commit -m "first commit"
 git branch -M main
