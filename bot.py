@@ -1,3 +1,4 @@
+import asyncio
 import random
 import logging
 from aiogram import Bot, Dispatcher, types
@@ -56,7 +57,7 @@ async def find_chat(message: types.Message):
             response = random.choice(find_shadow_responses)
             await message.answer(response)
         except Exception as e:
-            logging.error(f"Error while sending message: {e}")
+            logging.error(f"Ошибка при отправке сообщения: {e}")
             await message.answer("❌ Произошла ошибка при поиске тени.")
     else:
         if user_id not in waiting_users:
@@ -76,7 +77,7 @@ async def stop_chat(message: types.Message):
             await bot.send_message(partner_id, "❌ Тень ушла.")
             await message.answer("❌ Тень прекратила общение.")
         except Exception as e:
-            logging.error(f"Error while stopping chat: {e}")
+            logging.error(f"Ошибка при завершении общения: {e}")
             await message.answer("❌ Произошла ошибка при завершении общения.")
     else:
         await message.answer("❌ Вы не в чате. Нажмите '🔍 Найти тень'.")
@@ -109,14 +110,13 @@ async def chat_handler(message: types.Message):
 
         if message.text in ["🛑 Оборвать связь", "/stop"]:
             await bot.send_message(partner_id, message.text)
-            # Ensure the chat is stopped in both directions
             active_chats.pop(user_id, None)
             active_chats.pop(partner_id, None)
         else:
             try:
                 await bot.send_message(partner_id, message.text)
             except Exception as e:
-                logging.error(f"Error while forwarding message: {e}")
+                logging.error(f"Ошибка при пересылке сообщения: {e}")
                 await message.answer("❌ Произошла ошибка при отправке сообщения.")
     else:
         await message.answer("❌ Вы не в чате. Нажмите '🔍 Найти тень'.")
@@ -128,6 +128,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 with open("README.md", "a", encoding="utf-8") as file:
