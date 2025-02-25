@@ -1,5 +1,4 @@
 import random
-import asyncio
 import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
@@ -115,8 +114,6 @@ async def chat_handler(message: types.Message):
             active_chats.pop(partner_id, None)
         else:
             try:
-                delay = random.uniform(1, 3)
-                await asyncio.sleep(delay)
                 await bot.send_message(partner_id, message.text)
             except Exception as e:
                 logging.error(f"Error while forwarding message: {e}")
