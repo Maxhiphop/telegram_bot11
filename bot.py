@@ -104,9 +104,9 @@ if __name__ == "__main__":
 with open("README.md", "a", encoding="utf-8") as file:
     file.write("# telegram_bot11\n")
 
-import os
+import subprocess
 
-os.system("git init")
+subprocess.run(["git", "add", "README.md"])
 
 git add README.md
 git commit -m "first commit"
