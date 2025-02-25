@@ -104,7 +104,10 @@ if __name__ == "__main__":
 with open("README.md", "a", encoding="utf-8") as file:
     file.write("# telegram_bot11\n")
 
-git init
+import os
+
+os.system("git init")
+
 git add README.md
 git commit -m "first commit"
 git branch -M main
