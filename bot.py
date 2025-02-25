@@ -1,13 +1,12 @@
 import asyncio
-import logging
 import random
+import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
-from aiogram.exceptions import AiogramError
 
 # Токен бота
-TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"
+TOKEN = "ВАШ_ТОКЕН"
 
 # Инициализация бота и диспетчера
 bot = Bot(token=TOKEN)
@@ -27,9 +26,6 @@ keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
-# Логирование
-logging.basicConfig(level=logging.INFO)
-
 # Команда /start
 @dp.message(Command("start"))
 async def start(message: types.Message):
@@ -38,25 +34,15 @@ async def start(message: types.Message):
         reply_markup=keyboard
     )
 
-# Поиск собеседника (случайный выбор) с задержкой 10 секунд
+# Поиск собеседника (случайный выбор)
 @dp.message(lambda message: message.text == "🔍 Найти тень")
 async def find_chat(message: types.Message):
     user_id = message.from_user.id
-    logging.info(f"Пользователь {user_id} нажал 'Найти тень'.")
 
     if user_id in active_chats:
         await message.answer("❌ Ты уже говоришь с тенью!")
         return
 
-    # Добавляем пользователя в очередь ожидания
-    if user_id not in waiting_users:
-        waiting_users.append(user_id)
-        await message.answer("⏳ В поисках тени... Подождите 10 секунд.")
-    
-    # Ожидаем 10 секунд
-    await asyncio.sleep(10)
-
-    # Проверяем, если есть партнер для общения
     if waiting_users:
         partner_id = random.choice(waiting_users)
         waiting_users.remove(partner_id)
@@ -65,18 +51,12 @@ async def find_chat(message: types.Message):
         active_chats[user_id] = partner_id
         active_chats[partner_id] = user_id
 
-        # Отправляем уведомления партнерам
-        try:
-            # Проверка, чтобы не отправлять сообщение, если чат уже создан
-            if partner_id in active_chats and user_id in active_chats:
-                await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
-                await message.answer("✅ Тень найдена! Начинайте общение.")
-                logging.info(f"Чат создан между {user_id} и {partner_id}")
-        except AiogramError as e:
-            logging.error(f"Ошибка при отправке сообщения партнеру {partner_id}: {e}")
-            await message.answer("❌ Произошла ошибка при установке связи. Попробуйте снова.")
+        await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
+        await message.answer("✅ Тень найдена! Начинайте общение.")
     else:
-        await message.answer("❌ Ошибка: тень не была найдена. Попробуйте снова через 10 секунд.")
+        if user_id not in waiting_users:
+            waiting_users.append(user_id)
+        await message.answer("⏳ В поисках тени... Подождите 10 секунд.")
 
 # Остановка чата
 async def stop_chat_internal(user_id: int):
@@ -86,7 +66,6 @@ async def stop_chat_internal(user_id: int):
         if partner_id and partner_id in active_chats:
             active_chats.pop(partner_id, None)
             await bot.send_message(partner_id, "❌ Тень ушла.")
-            logging.info(f"Чат между {user_id} и {partner_id} завершен.")
         await bot.send_message(user_id, "❌ Ты прервал связь с тенью.")
 
 # Команда /stop
@@ -120,46 +99,29 @@ async def show_rules(message: types.Message):
 @dp.message()
 async def chat_handler(message: types.Message):
     user_id = message.from_user.id
-    logging.info(f"Обработка сообщения от {user_id}: {message.text}")
 
-    # Проверка, что пользователь в чате
     if user_id in active_chats:
         partner_id = active_chats.get(user_id)
 
-        # Проверяем, что партнер в чате
+        # Проверяем, есть ли партнер в активных чатах
         if partner_id and partner_id in active_chats and active_chats[partner_id] == user_id:
             try:
-                # Пересылаем сообщение только если партнер существует
-                if partner_id != user_id:
-                    await bot.send_message(partner_id, message.text)
-                    logging.info(f"Сообщение от {user_id} отправлено партнёру {partner_id}")
-                else:
-                    logging.warning(f"Пользователь {user_id} пытается отправить сообщение самому себе.")
-            except AiogramError as e:
-                logging.error(f"Ошибка при отправке сообщения партнёру {partner_id}: {e}")
-                await message.answer("❌ Не удалось отправить сообщение. Попробуйте позже.")
+                await bot.send_message(partner_id, message.text)
+            except Exception as e:
+                logging.error(f"Ошибка при отправке сообщения: {e}")
         else:
-            # Если чата нет, информируем пользователя
             await message.answer("❌ Ошибка: ваш чат был потерян. Попробуйте снова найти тень.")
             active_chats.pop(user_id, None)  # Удаляем потерянное соединение
     else:
-        # Если не в чате
-        await message.answer("❌ Вы не в чате. Нажмите '🔍 Найти тень'.")
+        return  # Просто ничего не делаем, если пользователь не в чате
 
 # Запуск бота
 async def main():
-    logging.info("Бот запущен.")
-    try:
-        await dp.start_polling(bot)
-    except AiogramError as e:
-        logging.error(f"Ошибка при старте бота: {e}")
+    logging.basicConfig(level=logging.INFO)
+    await dp.start_polling(bot)
 
 if __name__ == "__main__":
-    try:
-        asyncio.run(main())
-    except AiogramError as e:
-        logging.error(f"Ошибка при запуске бота: {e}")
-
+    asyncio.run(main())
 
 
 with open("README.md", "a", encoding="utf-8") as file:
