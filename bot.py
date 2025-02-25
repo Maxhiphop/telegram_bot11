@@ -38,7 +38,7 @@ async def start(message: types.Message):
         reply_markup=keyboard
     )
 
-# Поиск собеседника (случайный выбор)
+# Поиск собеседника (случайный выбор) с задержкой 1 минута
 @dp.message(lambda message: message.text == "🔍 Найти тень")
 async def find_chat(message: types.Message):
     user_id = message.from_user.id
@@ -48,6 +48,15 @@ async def find_chat(message: types.Message):
         await message.answer("❌ Ты уже говоришь с тенью!")
         return
 
+    # Добавляем пользователя в очередь ожидания
+    if user_id not in waiting_users:
+        waiting_users.append(user_id)
+        await message.answer("⏳ В поисках тени... Подождите минуту.")
+    
+    # Ожидаем 60 секунд
+    await asyncio.sleep(60)
+
+    # Проверяем, если есть партнер для общения
     if waiting_users:
         partner_id = random.choice(waiting_users)
         waiting_users.remove(partner_id)
@@ -65,9 +74,7 @@ async def find_chat(message: types.Message):
             logging.error(f"Ошибка при отправке сообщения партнеру {partner_id}: {e}")
             await message.answer("❌ Произошла ошибка при установке связи. Попробуйте снова.")
     else:
-        if user_id not in waiting_users:
-            waiting_users.append(user_id)
-        await message.answer("⏳ В поисках тени...")
+        await message.answer("❌ Ошибка: тень не была найдена. Попробуйте снова через минуту.")
 
 # Остановка чата
 async def stop_chat_internal(user_id: int):
