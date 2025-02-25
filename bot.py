@@ -101,11 +101,14 @@ async def chat_handler(message: types.Message):
     if user_id in active_chats:
         partner_id = active_chats[user_id]
         
-        # Random delay before sending the message to simulate "thinking"
-        delay = random.uniform(1, 3)  # Random delay between 1 and 3 seconds
-        await asyncio.sleep(delay)
-
-        await bot.send_message(partner_id, message.text)
+        # Проверка, если это команда завершения чата, то пропускаем задержку
+        if message.text in ["🛑 Оборвать связь", "/stop"]:
+            await bot.send_message(partner_id, message.text)
+        else:
+            # Random delay before sending the message to simulate "thinking"
+            delay = random.uniform(1, 3)  # Random delay between 1 and 3 seconds
+            await asyncio.sleep(delay)
+            await bot.send_message(partner_id, message.text)
     else:
         await message.answer("❌ Вы не в чате. Нажмите '🔍 Найти тень'.")
 
