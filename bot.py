@@ -35,7 +35,7 @@ async def start(message: types.Message):
     )
 
 # Поиск собеседника (случайный выбор)
-@dp.message(lambda message: message.text == "🔍 Найти тень")
+@dp.message(Command("find"))
 async def find_chat(message: types.Message):
     user_id = message.from_user.id
 
@@ -114,7 +114,7 @@ async def chat_handler(message: types.Message):
             await message.answer("❌ Ошибка: ваш чат был потерян. Попробуйте снова найти тень.")
             active_chats.pop(user_id, None)  # Удаляем потерянное соединение
     else:
-        return  # Если пользователь не в чате, то просто ничего не делаем
+        await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'")  # Если не в чате, уведомляем пользователя
 
 # Запуск бота
 async def main():
