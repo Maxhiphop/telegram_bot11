@@ -4,7 +4,7 @@ import random
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
-from aiogram.exceptions import AiogramError  # Используем AiogramError
+from aiogram.exceptions import AiogramError
 
 # Токен бота
 TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"
