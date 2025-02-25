@@ -52,9 +52,13 @@ async def find_chat(message: types.Message):
         active_chats[user_id] = partner_id
         active_chats[partner_id] = user_id
 
-        await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
-        response = random.choice(find_shadow_responses)
-        await message.answer(response)
+        try:
+            await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
+            response = random.choice(find_shadow_responses)
+            await message.answer(response)
+        except Exception as e:
+            logging.error(f"Error while sending message: {e}")
+            await message.answer("❌ Произошла ошибка при поиске тени.")
     else:
         if user_id not in waiting_users:
             waiting_users.append(user_id)
@@ -69,9 +73,12 @@ async def stop_chat(message: types.Message):
         partner_id = active_chats.pop(user_id)
         active_chats.pop(partner_id, None)
 
-        # Send message to partner and notify user
-        await bot.send_message(partner_id, "❌ Тень ушла.")
-        await message.answer("❌ Тень прекратила общение.")
+        try:
+            await bot.send_message(partner_id, "❌ Тень ушла.")
+            await message.answer("❌ Тень прекратила общение.")
+        except Exception as e:
+            logging.error(f"Error while stopping chat: {e}")
+            await message.answer("❌ Произошла ошибка при завершении общения.")
     else:
         await message.answer("❌ Вы не в чате. Нажмите '🔍 Найти тень'.")
 
@@ -107,9 +114,13 @@ async def chat_handler(message: types.Message):
             active_chats.pop(user_id, None)
             active_chats.pop(partner_id, None)
         else:
-            delay = random.uniform(1, 3)
-            await asyncio.sleep(delay)
-            await bot.send_message(partner_id, message.text)
+            try:
+                delay = random.uniform(1, 3)
+                await asyncio.sleep(delay)
+                await bot.send_message(partner_id, message.text)
+            except Exception as e:
+                logging.error(f"Error while forwarding message: {e}")
+                await message.answer("❌ Произошла ошибка при отправке сообщения.")
     else:
         await message.answer("❌ Вы не в чате. Нажмите '🔍 Найти тень'.")
 
@@ -120,7 +131,6 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
 
 
 with open("README.md", "a", encoding="utf-8") as file:
