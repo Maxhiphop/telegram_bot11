@@ -10,7 +10,7 @@ TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"
 
 # Bot and Dispatcher
 bot = Bot(token=TOKEN)
-dp = Dispatcher(bot=bot)  # Corrected initialization
+dp = Dispatcher(bot=bot)
 
 # User storage
 waiting_users = []
@@ -69,6 +69,7 @@ async def stop_chat(message: types.Message):
         partner_id = active_chats.pop(user_id)
         active_chats.pop(partner_id, None)
 
+        # Send message to partner and notify user
         await bot.send_message(partner_id, "❌ Тень ушла.")
         await message.answer("❌ Тень прекратила общение.")
     else:
@@ -102,6 +103,9 @@ async def chat_handler(message: types.Message):
 
         if message.text in ["🛑 Оборвать связь", "/stop"]:
             await bot.send_message(partner_id, message.text)
+            # Ensure the chat is stopped in both directions
+            active_chats.pop(user_id, None)
+            active_chats.pop(partner_id, None)
         else:
             delay = random.uniform(1, 3)
             await asyncio.sleep(delay)
@@ -116,6 +120,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 with open("README.md", "a", encoding="utf-8") as file:
