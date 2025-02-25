@@ -73,7 +73,7 @@ async def stop_chat(message: types.Message):
         await bot.send_message(partner_id, "❌ Тень ушла.")
         await message.answer("❌ Тень прекратила общение.")
     else:
-        await message.answer("Тень читает кодекс.")
+        await message.answer("❌ Вы не в чате. Нажмите '🔍 Найти тень'.")
 
 # ✅ Остановка чата по кнопке "🛑 Оборвать связь"
 @dp.message(lambda message: message.text == "🛑 Оборвать связь")
