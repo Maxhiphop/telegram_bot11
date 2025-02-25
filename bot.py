@@ -67,9 +67,11 @@ async def find_chat(message: types.Message):
 
         # Отправляем уведомления партнерам
         try:
-            await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
-            await message.answer("✅ Тень найдена! Начинайте общение.")
-            logging.info(f"Чат создан между {user_id} и {partner_id}")
+            # Проверка, чтобы не отправлять сообщение, если чат уже создан
+            if partner_id in active_chats and user_id in active_chats:
+                await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
+                await message.answer("✅ Тень найдена! Начинайте общение.")
+                logging.info(f"Чат создан между {user_id} и {partner_id}")
         except AiogramError as e:
             logging.error(f"Ошибка при отправке сообщения партнеру {partner_id}: {e}")
             await message.answer("❌ Произошла ошибка при установке связи. Попробуйте снова.")
