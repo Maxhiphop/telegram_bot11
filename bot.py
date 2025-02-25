@@ -128,7 +128,7 @@ async def chat_handler(message: types.Message):
             active_chats.pop(user_id, None)  # Удаляем потерянное соединение
     else:
         logging.info(f"Сообщение от {user_id} не отправлено: не в чате.")
-        return  # Убрано лишнее сообщение "❌ Вы не в чате"
+        await message.answer("❌ Вы не в чате. Нажмите '🔍 Найти тень'.")
 
 # Запуск бота
 async def main():
