@@ -1,9 +1,8 @@
 import logging
 import asyncio
 from aiogram import Bot, types
-from aiogram.filters import Command
 from aiogram import F
-from aiogram import Application  # Правильный импорт для версии 3.x
+from aiogram.client import Application  # Для версии 3.x
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 API_TOKEN = '8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY'  # Замените на ваш токен
@@ -13,7 +12,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Инициализация бота и приложения
 bot = Bot(token=API_TOKEN)
-app = Application.builder().token(API_TOKEN).build()  # Используем новый способ создания приложения
+app = Application.builder().token(API_TOKEN).build()  # Для новых версий aiogram
 
 # Словарь для хранения активных чатов
 active_chats = {}
@@ -29,14 +28,14 @@ keyboard = ReplyKeyboardMarkup(
 )
 
 # Команда /start
-@app.message(Command("start"))
+@app.message(F.command("start"))
 async def start(message: types.Message):
     await message.answer(
         "Добро пожаловать в элитное общество теней! Нажмите '🔍 Найти тень', чтобы начать.",
         reply_markup=keyboard
     )
 
-# Поиск собеседника (случайный выбор)
+# Поиск собеседника
 @app.message(F.text == '🔍 Найти тень')
 async def find_chat(message: types.Message):
     user_id = message.from_user.id
@@ -54,7 +53,6 @@ async def find_chat(message: types.Message):
             await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
             return
 
-    # Если партнера не нашли, сообщаем об этом
     active_chats[user_id] = None  # Устанавливаем значение None, пока не найдем партнера
     await message.answer("🔍 Ищем тень... Пожалуйста, подождите.")
 
@@ -73,7 +71,7 @@ async def handle_message(message: types.Message):
                 logging.error(f"Ошибка при отправке сообщения: {e}")
         else:
             await message.answer("❌ Ошибка: ваш чат был потерян. Попробуйте снова найти тень.")
-            active_chats.pop(user_id, None)  # Удаляем потерянное соединение
+            active_chats.pop(user_id, None)
     else:
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'")
 
