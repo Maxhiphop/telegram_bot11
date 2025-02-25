@@ -1,3 +1,4 @@
+import random
 import asyncio
 import logging
 from aiogram import Bot, Dispatcher, types
@@ -25,6 +26,13 @@ keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
+# Random responses for when a user finds a partner (shadow)
+find_shadow_responses = [
+    "✅ Тень найдена! Начинайте общение.",
+    "✅ Ты встретил свою тень. Приятного общения.",
+    "✅ Тень рядом. Начинай разговор."
+]
+
 # ✅ Команда /start
 @dp.message(Command("start"))
 async def start(message: types.Message):
@@ -45,7 +53,9 @@ async def find_chat(message: types.Message):
         active_chats[partner_id] = user_id
 
         await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
-        await message.answer("✅ Тень найдена! Начинайте общение.")
+        # Select a random response when a match is made
+        response = random.choice(find_shadow_responses)
+        await message.answer(response)
     else:
         if user_id not in waiting_users:
             waiting_users.append(user_id)
@@ -83,13 +93,18 @@ async def show_rules(message: types.Message):
     )
     await message.answer(rules_text, parse_mode="Markdown")
 
-# ✅ Пересылка сообщений между собеседниками
+# ✅ Пересылка сообщений между собеседниками с случайной задержкой
 @dp.message()
 async def chat_handler(message: types.Message):
     user_id = message.from_user.id
 
     if user_id in active_chats:
         partner_id = active_chats[user_id]
+        
+        # Random delay before sending the message to simulate "thinking"
+        delay = random.uniform(1, 3)  # Random delay between 1 and 3 seconds
+        await asyncio.sleep(delay)
+
         await bot.send_message(partner_id, message.text)
     else:
         await message.answer("❌ Вы не в чате. Нажмите '🔍 Найти тень'.")
@@ -101,6 +116,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 with open("README.md", "a", encoding="utf-8") as file:
     file.write("# telegram_bot11\n")
 
