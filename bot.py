@@ -3,7 +3,7 @@ import asyncio
 from aiogram import Bot, types
 from aiogram.filters import Command
 from aiogram import F
-from aiogram.client import Application
+from aiogram import Application  # Правильный импорт для версии 3.x
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 
 API_TOKEN = '8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY'  # Замените на ваш токен
@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Инициализация бота и приложения
 bot = Bot(token=API_TOKEN)
-app = Application(bot)
+app = Application.builder().token(API_TOKEN).build()  # Используем новый способ создания приложения
 
 # Словарь для хранения активных чатов
 active_chats = {}
@@ -110,7 +110,6 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
 
 with open("README.md", "a", encoding="utf-8") as file:
     file.write("# telegram_bot11\n")
