@@ -59,7 +59,7 @@ async def stop_chat_internal(user_id: int):
     """Закрывает чат между двумя пользователями"""
     if user_id in active_chats:
         partner_id = active_chats.pop(user_id, None)
-        if partner_id and partner_id in active_chats:
+        if partner_id:
             active_chats.pop(partner_id, None)
             await bot.send_message(partner_id, "❌ Тень ушла.")
         await bot.send_message(user_id, "❌ Ты прервал связь с тенью.")
@@ -97,13 +97,11 @@ async def chat_handler(message: types.Message):
     user_id = message.from_user.id
 
     if user_id in active_chats:
-        partner_id = active_chats[user_id]
-        try:
+        partner_id = active_chats.get(user_id)
+        if partner_id:
             await bot.send_message(partner_id, message.text)
-        except Exception as e:
-            logging.error(f"Ошибка при пересылке сообщения: {e}")
     else:
-        await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
+        return  # Теперь бот **не отправляет лишний текст "❌ Вы не в чате"**
 
 # Запуск бота
 async def main():
@@ -112,6 +110,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 
