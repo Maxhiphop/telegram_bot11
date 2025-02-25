@@ -33,7 +33,7 @@ find_shadow_responses = [
     "✅ Тень рядом. Начинай разговор."
 ]
 
-# Обработка команды /start
+# Команда /start
 @dp.message(Command("start"))
 async def start(message: types.Message):
     await message.answer(
@@ -62,16 +62,16 @@ async def find_chat(message: types.Message):
             waiting_users.append(user_id)
         await message.answer("⏳ В поисках тени...")
 
-# Отключение от чата
+# Закрытие чата
 async def stop_chat_internal(user_id: int):
     """Закрывает чат между двумя пользователями"""
     if user_id in active_chats:
         partner_id = active_chats.pop(user_id, None)
-        if partner_id:
+        if partner_id and partner_id in active_chats:
             active_chats.pop(partner_id, None)
             await bot.send_message(partner_id, "❌ Тень ушла.")
 
-# Обработка команды /stop
+# Команда /stop
 @dp.message(Command("stop"))
 async def stop_chat(message: types.Message):
     user_id = message.from_user.id
@@ -81,7 +81,7 @@ async def stop_chat(message: types.Message):
     else:
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
-# Обработка кнопки "Оборвать связь"
+# Кнопка "Оборвать связь"
 @dp.message(lambda message: message.text == "🛑 Оборвать связь")
 async def stop_chat_button(message: types.Message):
     await stop_chat(message)
@@ -111,7 +111,10 @@ async def chat_handler(message: types.Message):
             await stop_chat_internal(user_id)
             await message.answer("❌ Ты прервал связь с тенью.")
         else:
-            await bot.send_message(partner_id, message.text)
+            try:
+                await bot.send_message(partner_id, message.text)
+            except Exception as e:
+                logging.error(f"Ошибка при пересылке сообщения: {e}")
     else:
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
@@ -122,9 +125,6 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
-
 
 with open("README.md", "a", encoding="utf-8") as file:
     file.write("# telegram_bot11\n")
