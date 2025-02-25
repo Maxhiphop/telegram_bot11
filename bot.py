@@ -6,7 +6,7 @@ from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
 
 # Токен бота
-TOKEN = "ВАШ_ТОКЕН"
+TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"
 
 # Инициализация бота и диспетчера
 bot = Bot(token=TOKEN)
