@@ -122,13 +122,14 @@ async def chat_handler(message: types.Message):
     user_id = message.from_user.id
     logging.info(f"Обработка сообщения от {user_id}: {message.text}")
 
+    # Проверка, что пользователь в чате
     if user_id in active_chats:
         partner_id = active_chats.get(user_id)
 
-        # Проверяем, есть ли партнер в активных чатах
+        # Проверяем, что партнер в чате
         if partner_id and partner_id in active_chats and active_chats[partner_id] == user_id:
             try:
-                # Убедимся, что мы не отправляем сообщение самому себе
+                # Пересылаем сообщение только если партнер существует
                 if partner_id != user_id:
                     await bot.send_message(partner_id, message.text)
                     logging.info(f"Сообщение от {user_id} отправлено партнёру {partner_id}")
@@ -138,10 +139,11 @@ async def chat_handler(message: types.Message):
                 logging.error(f"Ошибка при отправке сообщения партнёру {partner_id}: {e}")
                 await message.answer("❌ Не удалось отправить сообщение. Попробуйте позже.")
         else:
+            # Если чата нет, информируем пользователя
             await message.answer("❌ Ошибка: ваш чат был потерян. Попробуйте снова найти тень.")
             active_chats.pop(user_id, None)  # Удаляем потерянное соединение
     else:
-        logging.info(f"Сообщение от {user_id} не отправлено: не в чате.")
+        # Если не в чате
         await message.answer("❌ Вы не в чате. Нажмите '🔍 Найти тень'.")
 
 # Запуск бота
@@ -157,6 +159,7 @@ if __name__ == "__main__":
         asyncio.run(main())
     except AiogramError as e:
         logging.error(f"Ошибка при запуске бота: {e}")
+
 
 
 with open("README.md", "a", encoding="utf-8") as file:
