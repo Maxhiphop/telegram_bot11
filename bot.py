@@ -48,6 +48,7 @@ async def find_chat(message: types.Message):
         partner_id = random.choice(waiting_users)
         waiting_users.remove(partner_id)
 
+        # Устанавливаем чат
         active_chats[user_id] = partner_id
         active_chats[partner_id] = user_id
 
@@ -95,7 +96,7 @@ async def show_rules(message: types.Message):
     )
     await message.answer(rules_text, parse_mode="Markdown")
 
-# Пересылка сообщений между пользователями
+# Пересылка сообщений между пользователями (исправлено!)
 @dp.message()
 async def chat_handler(message: types.Message):
     user_id = message.from_user.id
@@ -105,10 +106,11 @@ async def chat_handler(message: types.Message):
         if partner_id:
             try:
                 await bot.send_message(partner_id, message.text)
+                await bot.send_message(user_id, f"📩 Ты отправил: {message.text}")  # Подтверждение отправки
             except Exception as e:
                 logging.error(f"Ошибка при отправке сообщения: {e}")
     else:
-        return  # Убрано лишнее сообщение "❌ Вы не в чате"
+        await message.answer("❌ Вы не в чате. Нажмите '🔍 Найти тень'.")
 
 # Запуск бота
 async def main():
