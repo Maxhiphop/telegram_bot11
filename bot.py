@@ -41,6 +41,7 @@ async def start(message: types.Message):
 @dp.message(lambda message: message.text == "🔍 Найти тень")
 async def find_chat(message: types.Message):
     user_id = message.from_user.id
+    logging.info(f"Пользователь {user_id} нажал 'Найти тень'.")
 
     if user_id in active_chats:
         await message.answer("❌ Ты уже говоришь с тенью!")
@@ -54,9 +55,14 @@ async def find_chat(message: types.Message):
         active_chats[user_id] = partner_id
         active_chats[partner_id] = user_id
 
-        await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
-        await message.answer("✅ Тень найдена! Начинайте общение.")
-        logging.info(f"Чат создан между {user_id} и {partner_id}")
+        # Отправляем уведомления партнерам
+        try:
+            await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
+            await message.answer("✅ Тень найдена! Начинайте общение.")
+            logging.info(f"Чат создан между {user_id} и {partner_id}")
+        except Exception as e:
+            logging.error(f"Ошибка при отправке сообщения партнеру {partner_id}: {e}")
+            await message.answer("❌ Произошла ошибка при установке связи. Попробуйте снова.")
     else:
         if user_id not in waiting_users:
             waiting_users.append(user_id)
@@ -126,14 +132,16 @@ async def chat_handler(message: types.Message):
 # Запуск бота
 async def main():
     logging.info("Бот запущен.")
-    await dp.start_polling(bot)
+    try:
+        await dp.start_polling(bot)
+    except Exception as e:
+        logging.error(f"Ошибка при старте бота: {e}")
 
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except Exception as e:
         logging.error(f"Ошибка при запуске бота: {e}")
-
 
 
 
