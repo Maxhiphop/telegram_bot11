@@ -110,10 +110,11 @@ async def chat_handler(message: types.Message):
             except Exception as e:
                 logging.error(f"Ошибка при отправке сообщения: {e}")
         else:
+            # Чат потерян, прекращаем соединение
             await message.answer("❌ Ошибка: ваш чат был потерян. Попробуйте снова найти тень.")
             active_chats.pop(user_id, None)  # Удаляем потерянное соединение
     else:
-        return  # Просто ничего не делаем, если пользователь не в чате
+        return  # Если пользователь не в чате, то просто ничего не делаем
 
 # Запуск бота
 async def main():
@@ -122,6 +123,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 with open("README.md", "a", encoding="utf-8") as file:
