@@ -134,29 +134,10 @@ async def chat_handler(message: types.Message):
         logging.info(f"Сообщение от {user_id} не отправлено: не в чате.")
         await message.answer("❌ Вы не в чате. Нажмите '🔍 Найти тень'.")
 
-# Проверка связи в чате
-@dp.message()
-async def monitor_chat():
-    """Проверяем, нет ли зависших чатов"""
-    for user_id, partner_id in list(active_chats.items()):
-        try:
-            # Проверяем, что оба участника в чате
-            if partner_id in active_chats and active_chats[partner_id] == user_id:
-                continue  # Все в порядке, чат активен
-            else:
-                logging.warning(f"Чат между {user_id} и {partner_id} потерян.")
-                await stop_chat_internal(user_id)
-                await stop_chat_internal(partner_id)
-        except Exception as e:
-            logging.error(f"Ошибка в мониторинге чатов: {e}")
-
 # Запуск бота
 async def main():
     logging.info("Бот запущен.")
     try:
-        # Запускаем мониторинг чатов
-        asyncio.create_task(monitor_chat())
-
         await dp.start_polling(bot)
     except Exception as e:
         logging.error(f"Ошибка при старте бота: {e}")
@@ -166,8 +147,6 @@ if __name__ == "__main__":
         asyncio.run(main())
     except Exception as e:
         logging.error(f"Ошибка при запуске бота: {e}")
-
-
 
 
 with open("README.md", "a", encoding="utf-8") as file:
