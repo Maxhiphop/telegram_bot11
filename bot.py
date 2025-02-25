@@ -116,7 +116,11 @@ async def chat_handler(message: types.Message):
             except Exception as e:
                 logging.error(f"Ошибка при пересылке сообщения: {e}")
     else:
-        await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
+        # Если пользователь в чате, но сообщение не доходит — не показываем ошибку
+        if user_id in waiting_users:
+            await message.answer("⏳ Ожидание собеседника...")
+        else:
+            await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
 # Запуск бота
 async def main():
@@ -125,6 +129,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 with open("README.md", "a", encoding="utf-8") as file:
     file.write("# telegram_bot11\n")
