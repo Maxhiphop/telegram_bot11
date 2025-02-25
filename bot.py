@@ -106,7 +106,9 @@ with open("README.md", "a", encoding="utf-8") as file:
 
 import subprocess
 
+# Execute the git add command
 subprocess.run(["git", "add", "README.md"])
+
 
 git commit -m "first commit"
 git branch -M main
