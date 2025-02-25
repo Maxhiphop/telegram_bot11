@@ -107,11 +107,17 @@ with open("README.md", "a", encoding="utf-8") as file:
 import subprocess
 
 # Define your commit message
-commit_message = ""  # Replace with your message or leave it empty
+commit_message = "Первый коммит"  # Replace with your commit message
 
-# Execute the git commit command
+# Commit the changes
 subprocess.run(["git", "commit", "-m", commit_message])
 
-git branch -M main
-git remote add origin https://github.com/Maxhiphop/telegram_bot11.git
-git push -u origin main
+# Rename the branch to 'main'
+subprocess.run(["git", "branch", "-M", "main"])
+
+# Add the remote repository
+subprocess.run(["git", "remote", "add", "origin", "https://github.com/Maxhiphop/telegram_bot11.git"])
+
+# Push the changes to the remote repository
+subprocess.run(["git", "push", "-u", "origin", "main"])
+
