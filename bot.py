@@ -112,9 +112,6 @@ commit_message = ""  # Replace with your message or leave it empty
 # Execute the git commit command
 subprocess.run(["git", "commit", "-m", commit_message])
 
-
-
-git commit -m "first commit"
 git branch -M main
 git remote add origin https://github.com/Maxhiphop/telegram_bot11.git
 git push -u origin main
