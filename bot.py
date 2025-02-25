@@ -118,8 +118,12 @@ async def chat_handler(message: types.Message):
         # Проверяем, есть ли партнер в активных чатах
         if partner_id and partner_id in active_chats and active_chats[partner_id] == user_id:
             try:
-                await bot.send_message(partner_id, message.text)
-                logging.info(f"Сообщение от {user_id} отправлено партнёру {partner_id}")
+                # Убедимся, что мы не отправляем сообщение самому себе
+                if partner_id != user_id:
+                    await bot.send_message(partner_id, message.text)
+                    logging.info(f"Сообщение от {user_id} отправлено партнёру {partner_id}")
+                else:
+                    logging.warning(f"Пользователь {user_id} пытается отправить сообщение самому себе.")
             except Exception as e:
                 logging.error(f"Ошибка при отправке сообщения партнёру {partner_id}: {e}")
                 await message.answer("❌ Не удалось отправить сообщение. Попробуйте позже.")
@@ -162,6 +166,7 @@ if __name__ == "__main__":
         asyncio.run(main())
     except Exception as e:
         logging.error(f"Ошибка при запуске бота: {e}")
+
 
 
 with open("README.md", "a", encoding="utf-8") as file:
