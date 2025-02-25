@@ -106,10 +106,10 @@ with open("README.md", "a", encoding="utf-8") as file:
 
 import subprocess
 
-# Define the commit message
-commit_message = ""  # You can put your commit message here, or leave it empty
+# Define your commit message
+commit_message = ""  # Replace with your message or leave it empty
 
-# Run the git commit command
+# Execute the git commit command
 subprocess.run(["git", "commit", "-m", commit_message])
 
 
