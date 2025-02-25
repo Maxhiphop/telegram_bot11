@@ -10,7 +10,7 @@ TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"
 
 # Bot and Dispatcher
 bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher(bot=bot)  # Corrected initialization
 
 # User storage
 waiting_users = []
