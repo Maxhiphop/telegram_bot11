@@ -1,11 +1,10 @@
 import asyncio
-import random
 import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
 
-# Токен
+# Токен бота
 TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"
 
 # Инициализация бота и диспетчера
@@ -25,13 +24,6 @@ keyboard = ReplyKeyboardMarkup(
     ],
     resize_keyboard=True
 )
-
-# Возможные ответы при соединении
-find_shadow_responses = [
-    "✅ Тень найдена! Начинайте общение.",
-    "✅ Ты встретил свою тень. Приятного общения.",
-    "✅ Тень рядом. Начинай разговор."
-]
 
 # Команда /start
 @dp.message(Command("start"))
@@ -56,13 +48,13 @@ async def find_chat(message: types.Message):
         active_chats[partner_id] = user_id
 
         await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
-        await message.answer(random.choice(find_shadow_responses))
+        await message.answer("✅ Тень найдена! Начинайте общение.")
     else:
         if user_id not in waiting_users:
             waiting_users.append(user_id)
         await message.answer("⏳ В поисках тени...")
 
-# Закрытие чата
+# Остановка чата
 async def stop_chat_internal(user_id: int):
     """Закрывает чат между двумя пользователями"""
     if user_id in active_chats:
@@ -70,6 +62,7 @@ async def stop_chat_internal(user_id: int):
         if partner_id and partner_id in active_chats:
             active_chats.pop(partner_id, None)
             await bot.send_message(partner_id, "❌ Тень ушла.")
+        await bot.send_message(user_id, "❌ Ты прервал связь с тенью.")
 
 # Команда /stop
 @dp.message(Command("stop"))
@@ -77,7 +70,6 @@ async def stop_chat(message: types.Message):
     user_id = message.from_user.id
     if user_id in active_chats:
         await stop_chat_internal(user_id)
-        await message.answer("❌ Ты прервал связь с тенью.")
     else:
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
@@ -106,21 +98,12 @@ async def chat_handler(message: types.Message):
 
     if user_id in active_chats:
         partner_id = active_chats[user_id]
-
-        if message.text in ["🛑 Оборвать связь", "/stop"]:
-            await stop_chat_internal(user_id)
-            await message.answer("❌ Ты прервал связь с тенью.")
-        else:
-            try:
-                await bot.send_message(partner_id, message.text)
-            except Exception as e:
-                logging.error(f"Ошибка при пересылке сообщения: {e}")
+        try:
+            await bot.send_message(partner_id, message.text)
+        except Exception as e:
+            logging.error(f"Ошибка при пересылке сообщения: {e}")
     else:
-        # Если пользователь в чате, но сообщение не доходит — не показываем ошибку
-        if user_id in waiting_users:
-            await message.answer("⏳ Ожидание собеседника...")
-        else:
-            await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
+        await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
 # Запуск бота
 async def main():
@@ -129,6 +112,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 with open("README.md", "a", encoding="utf-8") as file:
