@@ -44,7 +44,6 @@ async def find_chat(message: types.Message):
         return
 
     if waiting_users:
-        # Выбираем случайного собеседника
         partner_id = random.choice(waiting_users)
         waiting_users.remove(partner_id)
 
@@ -103,14 +102,18 @@ async def chat_handler(message: types.Message):
 
     if user_id in active_chats:
         partner_id = active_chats.get(user_id)
-        if partner_id:
+
+        # Проверяем, есть ли партнер в активных чатах (защита от потери связи)
+        if partner_id and partner_id in active_chats and active_chats[partner_id] == user_id:
             try:
                 await bot.send_message(partner_id, message.text)
-                await bot.send_message(user_id, f"📩 Ты отправил: {message.text}")  # Подтверждение отправки
             except Exception as e:
                 logging.error(f"Ошибка при отправке сообщения: {e}")
+        else:
+            await message.answer("❌ Ошибка: ваш чат был потерян. Попробуйте снова найти тень.")
+            active_chats.pop(user_id, None)  # Удаляем потерянное соединение
     else:
-        await message.answer("❌ Вы не в чате. Нажмите '🔍 Найти тень'.")
+        return  # Убрано лишнее сообщение "❌ Вы не в чате"
 
 # Запуск бота
 async def main():
@@ -119,6 +122,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 with open("README.md", "a", encoding="utf-8") as file:
