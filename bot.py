@@ -13,7 +13,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Инициализация бота и диспетчера
 bot = Bot(token=API_TOKEN)
-app = Application.builder().token(API_TOKEN).build()
+dp = Dispatcher(bot)
 
 # Словарь для хранения активных чатов
 active_chats = {}
@@ -29,7 +29,7 @@ keyboard = ReplyKeyboardMarkup(
 )
 
 # Команда /start
-@app.message(Command("start"))
+@dp.message_handler(commands=["start"])
 async def start(message: types.Message):
     await message.answer(
         "Добро пожаловать в элитное общество теней! Нажмите '🔍 Найти тень', чтобы начать.",
@@ -37,7 +37,7 @@ async def start(message: types.Message):
     )
 
 # Поиск собеседника (случайный выбор)
-@app.message(Command("find"))
+@dp.message_handler(lambda message: message.text == '🔍 Найти тень')
 async def find_chat(message: types.Message):
     user_id = message.from_user.id
 
@@ -59,7 +59,7 @@ async def find_chat(message: types.Message):
     await message.answer("🔍 Ищем тень... Пожалуйста, подождите.")
 
 # Обработка сообщений
-@app.message()
+@dp.message_handler(lambda message: message.from_user.id in active_chats)
 async def handle_message(message: types.Message):
     user_id = message.from_user.id
 
@@ -78,7 +78,7 @@ async def handle_message(message: types.Message):
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'")
 
 # Оборвать связь
-@app.message(lambda message: message.text == "🛑 Оборвать связь")
+@dp.message_handler(lambda message: message.text == "🛑 Оборвать связь")
 async def stop_chat(message: types.Message):
     user_id = message.from_user.id
     if user_id in active_chats:
@@ -91,7 +91,7 @@ async def stop_chat(message: types.Message):
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
 # Кодекс теней
-@app.message(lambda message: message.text == "📜 Кодекс теней")
+@dp.message_handler(lambda message: message.text == "📜 Кодекс теней")
 async def show_rules(message: types.Message):
     rules_text = (
         "📜 *Кодекс теней:*\n"
@@ -106,11 +106,10 @@ async def show_rules(message: types.Message):
 # Запуск бота
 async def main():
     logging.basicConfig(level=logging.INFO)
-    await app.start_polling()
+    await dp.start_polling()
 
 if __name__ == "__main__":
     asyncio.run(main())
-
 
 
 
