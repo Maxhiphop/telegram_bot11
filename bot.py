@@ -26,6 +26,9 @@ keyboard = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
+# Логирование
+logging.basicConfig(level=logging.INFO)
+
 # Команда /start
 @dp.message(Command("start"))
 async def start(message: types.Message):
@@ -53,6 +56,7 @@ async def find_chat(message: types.Message):
 
         await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
         await message.answer("✅ Тень найдена! Начинайте общение.")
+        logging.info(f"Чат создан между {user_id} и {partner_id}")
     else:
         if user_id not in waiting_users:
             waiting_users.append(user_id)
@@ -66,6 +70,7 @@ async def stop_chat_internal(user_id: int):
         if partner_id and partner_id in active_chats:
             active_chats.pop(partner_id, None)
             await bot.send_message(partner_id, "❌ Тень ушла.")
+            logging.info(f"Чат между {user_id} и {partner_id} завершен.")
         await bot.send_message(user_id, "❌ Ты прервал связь с тенью.")
 
 # Команда /stop
@@ -95,7 +100,7 @@ async def show_rules(message: types.Message):
     )
     await message.answer(rules_text, parse_mode="Markdown")
 
-# Пересылка сообщений между пользователями (исправлено!)
+# Пересылка сообщений между пользователями
 @dp.message()
 async def chat_handler(message: types.Message):
     user_id = message.from_user.id
@@ -103,21 +108,24 @@ async def chat_handler(message: types.Message):
     if user_id in active_chats:
         partner_id = active_chats.get(user_id)
 
-        # Проверяем, есть ли партнер в активных чатах (защита от потери связи)
+        # Проверяем, есть ли партнер в активных чатах
         if partner_id and partner_id in active_chats and active_chats[partner_id] == user_id:
             try:
                 await bot.send_message(partner_id, message.text)
+                logging.info(f"Сообщение от {user_id} отправлено партнёру {partner_id}")
             except Exception as e:
                 logging.error(f"Ошибка при отправке сообщения: {e}")
+                await message.answer("❌ Не удалось отправить сообщение. Попробуйте позже.")
         else:
             await message.answer("❌ Ошибка: ваш чат был потерян. Попробуйте снова найти тень.")
             active_chats.pop(user_id, None)  # Удаляем потерянное соединение
     else:
+        logging.info(f"Сообщение от {user_id} не отправлено: не в чате.")
         return  # Убрано лишнее сообщение "❌ Вы не в чате"
 
 # Запуск бота
 async def main():
-    logging.basicConfig(level=logging.INFO)
+    logging.info("Бот запущен.")
     await dp.start_polling(bot)
 
 if __name__ == "__main__":
