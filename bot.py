@@ -1,11 +1,10 @@
-import random
 import logging
 import asyncio
 from aiogram import Bot, Dispatcher, types, F
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
 
-API_TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"  # Замените на ваш токен
+API_TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"  # Замените на свой токен
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -40,7 +39,7 @@ async def start(message: types.Message):
 async def find_chat(message: types.Message):
     user_id = message.from_user.id
 
-    if user_id in active_chats:
+    if user_id in active_chats and active_chats[user_id] is not None:
         await message.answer("❌ Ты уже говоришь с тенью!")
         return
 
@@ -52,6 +51,7 @@ async def find_chat(message: types.Message):
             await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
             return
 
+    # Если собеседник не найден, ставим в ожидание
     active_chats[user_id] = None
     await message.answer("🔍 Ищем тень... Пожалуйста, подождите.")
 
@@ -87,12 +87,16 @@ async def show_rules(message: types.Message):
 async def handle_message(message: types.Message):
     user_id = message.from_user.id
 
-    if user_id in active_chats and active_chats[user_id] is not None:
+    if user_id in active_chats:
         partner_id = active_chats[user_id]
-        try:
-            await bot.send_message(partner_id, message.text)
-        except Exception as e:
-            logging.error(f"Ошибка при отправке сообщения: {e}")
+
+        if partner_id is not None and partner_id in active_chats:
+            try:
+                await bot.send_message(partner_id, message.text)
+            except Exception as e:
+                logging.error(f"Ошибка при отправке сообщения: {e}")
+        else:
+            await message.answer("🔍 Ты в поиске, подожди собеседника.")
     else:
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'")
 
