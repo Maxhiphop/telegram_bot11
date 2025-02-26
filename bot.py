@@ -117,8 +117,10 @@ async def handle_message(message: types.Message):
                     logging.error(f"Ошибка при отправке сообщения: {e}")
                     await message.answer("❌ Произошла ошибка при отправке сообщения.")
             else:
+                # Это на случай, если чат был разрушен, но не удален
                 await message.answer("🔍 Ты в поиске, подожди собеседника.")
         else:
+            # Убираем лишнюю ошибку, если пользователи в поиске
             await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
 # Запуск бота
@@ -129,6 +131,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 with open("README.md", "a", encoding="utf-8") as file:
     file.write("# telegram_bot11\n")
