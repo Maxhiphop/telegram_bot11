@@ -96,6 +96,7 @@ async def handle_message(message: types.Message):
                 await bot.send_message(partner_id, message.text)
             except Exception as e:
                 logging.error(f"Ошибка при отправке сообщения: {e}")
+                await message.answer("❌ Произошла ошибка при отправке сообщения.")
         else:
             await message.answer("🔍 Ты в поиске, подожди собеседника.")
     else:
