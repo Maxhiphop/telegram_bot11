@@ -100,14 +100,17 @@ async def handle_message(message: types.Message):
 
         if partner_id in active_chats and active_chats[partner_id] == user_id:
             try:
-                # Пересылаем сообщение собеседнику
-                await bot.send_message(partner_id, message.text)
+                # Проверяем, что собеседник еще активен
+                if partner_id in active_chats:
+                    await bot.send_message(partner_id, message.text)
+                else:
+                    await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
             except Exception as e:
                 logging.error(f"Ошибка при отправке сообщения: {e}")
         else:
-            pass
+            pass  # Если собеседник не активен, ничего не отправляем
     else:
-        pass
+        pass  # Если пользователь не в чате, не отправляем сообщение
 
 # Запуск бота
 async def main():
