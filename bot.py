@@ -51,10 +51,12 @@ async def find_chat(message: types.Message):
 
     # Пытаемся найти первого свободного собеседника
     if len(search_queue) >= 2:
+        # Находим пару
         partner_id = search_queue.pop(0)
         active_chats[user_id] = partner_id
         active_chats[partner_id] = user_id
 
+        # Отправляем уведомление об успешном соединении
         await message.answer("✅ Тень найдена! Начинайте общение.")
         await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
 
@@ -100,10 +102,8 @@ async def handle_message(message: types.Message):
             except Exception as e:
                 logging.error(f"Ошибка при отправке сообщения: {e}")
         else:
-            # В случае ошибки или если нет собеседника
             pass
     else:
-        # Если пользователь не в чате, не отправляем сообщение
         pass
 
 # Запуск бота
@@ -114,7 +114,6 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
 
 
 
