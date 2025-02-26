@@ -95,13 +95,15 @@ async def handle_message(message: types.Message):
 
         if partner_id in active_chats and active_chats[partner_id] == user_id:
             try:
+                # Пересылаем сообщение собеседнику
                 await bot.send_message(partner_id, message.text)
             except Exception as e:
                 logging.error(f"Ошибка при отправке сообщения: {e}")
-                await message.answer("❌ Произошла ошибка при отправке сообщения.")
         else:
+            # В случае ошибки или если нет собеседника
             pass
     else:
+        # Если пользователь не в чате, не отправляем сообщение
         pass
 
 # Запуск бота
@@ -112,6 +114,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 
