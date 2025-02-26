@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher, types, F
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
 
-API_TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"  # Замените на свой токен
+API_TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"  # Вставь свой токен
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -43,15 +43,16 @@ async def find_chat(message: types.Message):
         await message.answer("❌ Ты уже говоришь с тенью!")
         return
 
-    for partner_id, partner in active_chats.items():
-        if partner is None:
+    # Ищем свободного собеседника
+    for partner_id in active_chats.keys():
+        if active_chats[partner_id] is None:
             active_chats[user_id] = partner_id
             active_chats[partner_id] = user_id
             await message.answer("✅ Тень найдена! Начинайте общение.")
             await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
             return
 
-    # Если собеседник не найден, ставим в ожидание
+    # Если нет свободных, ставим в очередь
     active_chats[user_id] = None
     await message.answer("🔍 Ищем тень... Пожалуйста, подождите.")
 
@@ -82,15 +83,15 @@ async def show_rules(message: types.Message):
     )
     await message.answer(rules_text, parse_mode="Markdown")
 
-# Обработка сообщений между пользователями
-@dp.message()
+# Пересылка сообщений между пользователями
+@dp.message(F.text)
 async def handle_message(message: types.Message):
     user_id = message.from_user.id
 
-    if user_id in active_chats:
+    if user_id in active_chats and active_chats[user_id] is not None:
         partner_id = active_chats[user_id]
 
-        if partner_id is not None and partner_id in active_chats:
+        if partner_id in active_chats and active_chats[partner_id] == user_id:
             try:
                 await bot.send_message(partner_id, message.text)
             except Exception as e:
@@ -98,7 +99,7 @@ async def handle_message(message: types.Message):
         else:
             await message.answer("🔍 Ты в поиске, подожди собеседника.")
     else:
-        await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'")
+        await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
 # Запуск бота
 async def main():
