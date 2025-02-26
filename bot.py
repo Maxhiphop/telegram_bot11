@@ -15,8 +15,8 @@ dp = Dispatcher()
 
 # Словарь для хранения активных чатов
 active_chats = {}
-# Очередь пользователей в поиске
-search_queue = []
+# Множество пользователей в поиске (для быстрого поиска)
+search_set = set()
 
 # Клавиатура
 keyboard = ReplyKeyboardMarkup(
@@ -45,20 +45,23 @@ async def find_chat(message: types.Message):
         await message.answer("❌ Ты уже говоришь с тенью!")
         return
 
-    # Добавляем пользователя в очередь поиска
-    search_queue.append(user_id)
+    # Добавляем пользователя в множество поиска
+    search_set.add(user_id)
     await message.answer("🔍 Ищем тень... Пожалуйста, подождите.")
 
-    # Пытаемся найти первого свободного собеседника
-    if len(search_queue) >= 2:
+    # Пытаемся найти свободного собеседника
+    if len(search_set) >= 2:
         # Находим пару
-        partner_id = search_queue.pop(0)
-        active_chats[user_id] = partner_id
-        active_chats[partner_id] = user_id
+        partner_id = search_set.pop()  # Берем первого попавшегося
+        if partner_id != user_id:
+            active_chats[user_id] = partner_id
+            active_chats[partner_id] = user_id
 
-        # Отправляем уведомление об успешном соединении
-        await message.answer("✅ Тень найдена! Начинайте общение.")
-        await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
+            # Отправляем уведомление об успешном соединении
+            await message.answer("✅ Тень найдена! Начинайте общение.")
+            await bot.send_message(partner_id, "✅ Тень найдена! Начинайте общение.")
+        else:
+            search_set.remove(user_id)  # Убираем пользователя, если он сам попал в очередь
 
 # Оборвать связь
 @dp.message(lambda message: message.text == "🛑 Оборвать связь")
