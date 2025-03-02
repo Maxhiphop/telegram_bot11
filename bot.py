@@ -41,6 +41,7 @@ async def start(message: types.Message):
 async def find_chat(message: types.Message):
     user_id = message.from_user.id
 
+    # Проверка, если пользователь уже в чате
     if user_id in active_chats:
         await message.answer("❌ Ты уже говоришь с тенью!")
         return
@@ -101,12 +102,14 @@ async def show_rules(message: types.Message):
 async def handle_message(message: types.Message):
     user_id = message.from_user.id
 
+    # Проверяем, находится ли пользователь в активном чате
     if user_id in active_chats:
         partner_id = active_chats[user_id]
-
-        # Проверяем, активен ли собеседник
+        
+        # Проверяем, что партнер также активен и не покинул чат
         if partner_id in active_chats and active_chats[partner_id] == user_id:
             try:
+                # Пересылаем сообщение собеседнику
                 await bot.send_message(partner_id, message.text)
             except Exception as e:
                 logging.error(f"Ошибка при отправке сообщения: {e}")
@@ -125,7 +128,6 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
 
 
 with open("README.md", "a", encoding="utf-8") as file:
