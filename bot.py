@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
 
-API_TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"  # Замените на свой токен
+API_TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"  # Укажи свой токен
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -70,9 +70,9 @@ async def stop_chat(message: types.Message):
     user_id = message.from_user.id
 
     if user_id in active_chats:
-        partner_id = active_chats.pop(user_id)
-        if partner_id in active_chats:
-            active_chats.pop(partner_id)
+        partner_id = active_chats.pop(user_id, None)
+        if partner_id:
+            active_chats.pop(partner_id, None)
             await bot.send_message(partner_id, "❌ Тень ушла. Чат завершен.")
         await message.answer("❌ Ты прервал связь с тенью. Чат завершен.")
     
@@ -124,7 +124,6 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
 
 
 with open("README.md", "a", encoding="utf-8") as file:
