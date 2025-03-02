@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Инициализация бота и диспетчера
 bot = Bot(token=API_TOKEN)
-dp = Dispatcher()
+dp = Dispatcher()  # ← ОБЯЗАТЕЛЬНО оставить пустым (aiogram 3.x)
 
 # Словарь активных чатов
 active_chats = {}
@@ -66,7 +66,7 @@ async def stop_chat(message: types.Message):
 
     if user_id in active_chats:
         partner_id = active_chats.pop(user_id, None)
-        if partner_id:
+        if partner_id and partner_id in active_chats:
             active_chats.pop(partner_id, None)
             await bot.send_message(partner_id, "❌ Тень ушла. Чат завершен.")
         await message.answer("❌ Ты прервал связь с тенью. Чат завершен.")
@@ -119,7 +119,6 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
-
 
 
 with open("README.md", "a", encoding="utf-8") as file:
