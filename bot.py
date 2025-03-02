@@ -113,6 +113,7 @@ async def handle_message(message: types.Message):
         else:
             await message.answer("❌ Тень исчезла. Чат завершен.")
             active_chats.pop(user_id, None)  # Убираем пользователя из активных чатов
+            active_chats.pop(partner_id, None)  # Убираем партнера
     else:
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
@@ -124,6 +125,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 with open("README.md", "a", encoding="utf-8") as file:
