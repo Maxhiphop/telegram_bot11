@@ -4,13 +4,13 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
 
-API_TOKEN = "ТВОЙ_ТОКЕН"  # Укажи свой токен
+API_TOKEN = ("8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY")
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
 
 # Инициализация бота и диспетчера
-bot = Bot("8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY")
+bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
 
 # Словарь для хранения активных чатов
@@ -45,18 +45,16 @@ async def find_chat(message: types.Message):
         await message.answer("❌ Ты уже говоришь с тенью!")
         return
 
-    # Добавляем пользователя в очередь поиска
     if user_id not in search_queue:
         search_queue.append(user_id)
 
     await message.answer("🔍 Ищем тень... Пожалуйста, подождите.")
 
-    # Проверяем, есть ли в очереди хотя бы 2 человека
-    if len(search_queue) >= 2:
+    # Если в очереди 2+ человека, соединяем их
+    while len(search_queue) >= 2:
         user1 = search_queue.pop(0)
         user2 = search_queue.pop(0)
 
-        # Связываем пользователей
         active_chats[user1] = user2
         active_chats[user2] = user1
 
@@ -69,14 +67,16 @@ async def stop_chat(message: types.Message):
     user_id = message.from_user.id
 
     if user_id in active_chats:
-        partner_id = active_chats.pop(user_id)
-        if partner_id in active_chats:
-            active_chats.pop(partner_id)
+        partner_id = active_chats.pop(user_id, None)
+        if partner_id:
+            active_chats.pop(partner_id, None)
             await bot.send_message(partner_id, "❌ Тень ушла. Чат завершен.")
         await message.answer("❌ Ты прервал связь с тенью. Чат завершен.")
+    
     elif user_id in search_queue:
         search_queue.remove(user_id)
         await message.answer("❌ Ты отменил поиск собеседника.")
+    
     else:
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
@@ -99,28 +99,8 @@ async def handle_message(message: types.Message):
     user_id = message.from_user.id
 
     if user_id in active_chats:
-        partner_id = active_chats[user_id]
+        partner_id =
 
-        # Проверяем, активен ли собеседник
-        if partner_id in active_chats and active_chats[partner_id] == user_id:
-            try:
-                await bot.send_message(partner_id, message.text)
-            except Exception as e:
-                logging.error(f"Ошибка при отправке сообщения: {e}")
-        else:
-            await message.answer("❌ Тень исчезла. Чат завершен.")
-            active_chats.pop(user_id, None)  # Убираем пользователя из активных чатов
-    else:
-        await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
-
-# Запуск бота
-async def main():
-    logging.basicConfig(level=logging.INFO)
-    await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
-
-if __name__ == "__main__":
-    asyncio.run(main())
 
 with open("README.md", "a", encoding="utf-8") as file:
     file.write("# telegram_bot11\n")
