@@ -10,7 +10,7 @@ API_TOKEN = "ТВОЙ_ТОКЕН"  # Укажи свой токен
 logging.basicConfig(level=logging.INFO)
 
 # Инициализация бота и диспетчера
-bot = Bot"8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"
+bot = Bot("8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY")
 dp = Dispatcher()
 
 # Словарь для хранения активных чатов
