@@ -1,10 +1,10 @@
 import logging
 import asyncio
-from aiogram import Bot, Dispatcher, types, F
+from aiogram import Bot, Dispatcher, types
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
 
-API_TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"  # Замени на свой токен
+API_TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"  # Замените на свой токен
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -13,9 +13,9 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
 
-# Словарь активных чатов
+# Словарь для хранения активных чатов
 active_chats = {}
-# Очередь поиска
+# Очередь пользователей в поиске
 search_queue = []
 
 # Клавиатура
@@ -32,24 +32,12 @@ keyboard = ReplyKeyboardMarkup(
 @dp.message(Command("start"))
 async def start(message: types.Message):
     await message.answer(
-        "Добро пожаловать в общество теней! Нажмите '🔍 Найти тень', чтобы найти собеседника.",
+        "Добро пожаловать в общество теней! Нажмите '🔍 Найти тень', чтобы начать поиск собеседника.",
         reply_markup=keyboard
     )
 
-# Функция поиска собеседника
-async def match_users():
-    while len(search_queue) >= 2:
-        user1 = search_queue.pop(0)
-        user2 = search_queue.pop(0)
-
-        active_chats[user1] = user2
-        active_chats[user2] = user1
-
-        await bot.send_message(user1, "✅ Тень найдена! Начинайте общение.")
-        await bot.send_message(user2, "✅ Тень найдена! Начинайте общение.")
-
 # Поиск собеседника
-@dp.message(F.text == "🔍 Найти тень")
+@dp.message(lambda message: message.text == "🔍 Найти тень")
 async def find_chat(message: types.Message):
     user_id = message.from_user.id
 
@@ -59,31 +47,44 @@ async def find_chat(message: types.Message):
 
     if user_id not in search_queue:
         search_queue.append(user_id)
-        await message.answer("🔍 Ищем тень... Пожалуйста, подождите.")
 
-    await match_users()  # Запускаем поиск сразу
+    await message.answer("🔍 Ищем тень... Пожалуйста, подождите.")
+
+    # Если в очереди 2+ человека, соединяем их
+    if len(search_queue) >= 2:
+        # Берем двух пользователей из очереди
+        user1 = search_queue.pop(0)
+        user2 = search_queue.pop(0)
+
+        # Связываем пользователей
+        active_chats[user1] = user2
+        active_chats[user2] = user1
+
+        # Уведомляем обоих пользователей
+        await bot.send_message(user1, "✅ Тень найдена! Начинайте общение.")
+        await bot.send_message(user2, "✅ Тень найдена! Начинайте общение.")
 
 # Оборвать связь
-@dp.message(F.text == "🛑 Оборвать связь")
+@dp.message(lambda message: message.text == "🛑 Оборвать связь")
 async def stop_chat(message: types.Message):
     user_id = message.from_user.id
 
     if user_id in active_chats:
-        partner_id = active_chats.pop(user_id, None)
-        if partner_id and active_chats.get(partner_id) == user_id:
-            active_chats.pop(partner_id, None)
+        partner_id = active_chats.pop(user_id)
+        if partner_id in active_chats:
+            active_chats.pop(partner_id)
             await bot.send_message(partner_id, "❌ Тень ушла. Чат завершен.")
         await message.answer("❌ Ты прервал связь с тенью. Чат завершен.")
-
+    
     elif user_id in search_queue:
         search_queue.remove(user_id)
         await message.answer("❌ Ты отменил поиск собеседника.")
-
+    
     else:
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
 # Кодекс теней
-@dp.message(F.text == "📜 Кодекс теней")
+@dp.message(lambda message: message.text == "📜 Кодекс теней")
 async def show_rules(message: types.Message):
     rules_text = (
         "📜 *Кодекс теней:*\n"
@@ -96,13 +97,14 @@ async def show_rules(message: types.Message):
     await message.answer(rules_text, parse_mode="Markdown")
 
 # Пересылка сообщений между пользователями
-@dp.message()
+@dp.message(lambda message: True)
 async def handle_message(message: types.Message):
     user_id = message.from_user.id
 
     if user_id in active_chats:
         partner_id = active_chats[user_id]
 
+        # Проверяем, активен ли собеседник
         if partner_id in active_chats and active_chats[partner_id] == user_id:
             try:
                 await bot.send_message(partner_id, message.text)
@@ -110,14 +112,13 @@ async def handle_message(message: types.Message):
                 logging.error(f"Ошибка при отправке сообщения: {e}")
         else:
             await message.answer("❌ Тень исчезла. Чат завершен.")
-            active_chats.pop(user_id, None)
+            active_chats.pop(user_id, None)  # Убираем пользователя из активных чатов
     else:
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
 # Запуск бота
 async def main():
     logging.basicConfig(level=logging.INFO)
-    print("Бот запущен...")
     await bot.delete_webhook(drop_pending_updates=True)
     await dp.start_polling(bot)
 
