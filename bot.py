@@ -1,10 +1,10 @@
 import logging
 import asyncio
-from aiogram import Bot, Dispatcher, types
+from aiogram import Bot, Dispatcher, types, F
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from aiogram.filters import Command
 
-API_TOKEN = ("8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY")
+API_TOKEN = "8059081878:AAFYJBDijfhgBKtW4ictU5NXDH5WFXeRnRY"  # Замени на свой токен
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -13,9 +13,9 @@ logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
 
-# Словарь для хранения активных чатов
+# Словарь активных чатов
 active_chats = {}
-# Очередь пользователей в поиске
+# Очередь поиска
 search_queue = []
 
 # Клавиатура
@@ -32,12 +32,12 @@ keyboard = ReplyKeyboardMarkup(
 @dp.message(Command("start"))
 async def start(message: types.Message):
     await message.answer(
-        "Добро пожаловать в общество теней! Нажмите '🔍 Найти тень', чтобы начать поиск собеседника.",
+        "Добро пожаловать в общество теней! Нажмите '🔍 Найти тень', чтобы найти собеседника.",
         reply_markup=keyboard
     )
 
 # Поиск собеседника
-@dp.message(lambda message: message.text == "🔍 Найти тень")
+@dp.message(F.text == "🔍 Найти тень")
 async def find_chat(message: types.Message):
     user_id = message.from_user.id
 
@@ -47,11 +47,9 @@ async def find_chat(message: types.Message):
 
     if user_id not in search_queue:
         search_queue.append(user_id)
+        await message.answer("🔍 Ищем тень... Пожалуйста, подождите.")
 
-    await message.answer("🔍 Ищем тень... Пожалуйста, подождите.")
-
-    # Если в очереди 2+ человека, соединяем их
-    while len(search_queue) >= 2:
+    if len(search_queue) >= 2:
         user1 = search_queue.pop(0)
         user2 = search_queue.pop(0)
 
@@ -62,7 +60,7 @@ async def find_chat(message: types.Message):
         await bot.send_message(user2, "✅ Тень найдена! Начинайте общение.")
 
 # Оборвать связь
-@dp.message(lambda message: message.text == "🛑 Оборвать связь")
+@dp.message(F.text == "🛑 Оборвать связь")
 async def stop_chat(message: types.Message):
     user_id = message.from_user.id
 
@@ -72,7 +70,7 @@ async def stop_chat(message: types.Message):
             active_chats.pop(partner_id, None)
             await bot.send_message(partner_id, "❌ Тень ушла. Чат завершен.")
         await message.answer("❌ Ты прервал связь с тенью. Чат завершен.")
-    
+
     elif user_id in search_queue:
         search_queue.remove(user_id)
         await message.answer("❌ Ты отменил поиск собеседника.")
@@ -81,7 +79,7 @@ async def stop_chat(message: types.Message):
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
 # Кодекс теней
-@dp.message(lambda message: message.text == "📜 Кодекс теней")
+@dp.message(F.text == "📜 Кодекс теней")
 async def show_rules(message: types.Message):
     rules_text = (
         "📜 *Кодекс теней:*\n"
@@ -94,12 +92,34 @@ async def show_rules(message: types.Message):
     await message.answer(rules_text, parse_mode="Markdown")
 
 # Пересылка сообщений между пользователями
-@dp.message(lambda message: True)
+@dp.message()
 async def handle_message(message: types.Message):
     user_id = message.from_user.id
 
     if user_id in active_chats:
-        partner_id = active_chats.pop(user_id, None)
+        partner_id = active_chats[user_id]
+
+        if partner_id in active_chats and active_chats[partner_id] == user_id:
+            try:
+                await bot.send_message(partner_id, message.text)
+            except Exception as e:
+                logging.error(f"Ошибка при отправке сообщения: {e}")
+        else:
+            await message.answer("❌ Тень исчезла. Чат завершен.")
+            active_chats.pop(user_id, None)
+    else:
+        await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
+
+# Запуск бота
+async def main():
+    logging.basicConfig(level=logging.INFO)
+    print("Бот запущен...")
+    await bot.delete_webhook(drop_pending_updates=True)
+    await dp.start_polling(bot)
+
+if __name__ == "__main__":
+    asyncio.run(main())
+
 
 
 with open("README.md", "a", encoding="utf-8") as file:
