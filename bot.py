@@ -11,7 +11,7 @@ logging.basicConfig(level=logging.INFO)
 
 # Инициализация бота и диспетчера
 bot = Bot(token=API_TOKEN)
-dp = Dispatcher()  # ← ОБЯЗАТЕЛЬНО оставить пустым (aiogram 3.x)
+dp = Dispatcher()
 
 # Словарь активных чатов
 active_chats = {}
@@ -36,6 +36,18 @@ async def start(message: types.Message):
         reply_markup=keyboard
     )
 
+# Функция поиска собеседника
+async def match_users():
+    while len(search_queue) >= 2:
+        user1 = search_queue.pop(0)
+        user2 = search_queue.pop(0)
+
+        active_chats[user1] = user2
+        active_chats[user2] = user1
+
+        await bot.send_message(user1, "✅ Тень найдена! Начинайте общение.")
+        await bot.send_message(user2, "✅ Тень найдена! Начинайте общение.")
+
 # Поиск собеседника
 @dp.message(F.text == "🔍 Найти тень")
 async def find_chat(message: types.Message):
@@ -49,15 +61,7 @@ async def find_chat(message: types.Message):
         search_queue.append(user_id)
         await message.answer("🔍 Ищем тень... Пожалуйста, подождите.")
 
-    if len(search_queue) >= 2:
-        user1 = search_queue.pop(0)
-        user2 = search_queue.pop(0)
-
-        active_chats[user1] = user2
-        active_chats[user2] = user1
-
-        await bot.send_message(user1, "✅ Тень найдена! Начинайте общение.")
-        await bot.send_message(user2, "✅ Тень найдена! Начинайте общение.")
+    await match_users()  # Запускаем поиск сразу
 
 # Оборвать связь
 @dp.message(F.text == "🛑 Оборвать связь")
@@ -66,7 +70,7 @@ async def stop_chat(message: types.Message):
 
     if user_id in active_chats:
         partner_id = active_chats.pop(user_id, None)
-        if partner_id and partner_id in active_chats:
+        if partner_id and active_chats.get(partner_id) == user_id:
             active_chats.pop(partner_id, None)
             await bot.send_message(partner_id, "❌ Тень ушла. Чат завершен.")
         await message.answer("❌ Ты прервал связь с тенью. Чат завершен.")
@@ -74,7 +78,7 @@ async def stop_chat(message: types.Message):
     elif user_id in search_queue:
         search_queue.remove(user_id)
         await message.answer("❌ Ты отменил поиск собеседника.")
-    
+
     else:
         await message.answer("❌ Ты не в чате. Нажми '🔍 Найти тень'.")
 
@@ -119,6 +123,7 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
 
 
 with open("README.md", "a", encoding="utf-8") as file:
