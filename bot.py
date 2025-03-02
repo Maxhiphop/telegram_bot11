@@ -99,7 +99,7 @@ async def handle_message(message: types.Message):
     user_id = message.from_user.id
 
     if user_id in active_chats:
-        partner_id =
+        partner_id = active_chats.pop(user_id, None)
 
 
 with open("README.md", "a", encoding="utf-8") as file:
